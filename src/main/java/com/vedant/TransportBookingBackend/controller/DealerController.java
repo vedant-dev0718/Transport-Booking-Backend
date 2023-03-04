@@ -1,6 +1,8 @@
 package com.vedant.TransportBookingBackend.controller;
 
 import com.vedant.TransportBookingBackend.constant.Endpoints;
+import com.vedant.TransportBookingBackend.dto.request.LoginRequestDTO;
+import com.vedant.TransportBookingBackend.dto.request.LoginViaOtpRequestDTO;
 import com.vedant.TransportBookingBackend.dto.response.LoginDealerResponseDTO;
 import com.vedant.TransportBookingBackend.dto.request.SignupDealerRequestDTO;
 import com.vedant.TransportBookingBackend.service.DealerService;
@@ -27,4 +29,15 @@ public class DealerController {
         return dealerService.signup(signupDealerRequestDTO);
     }
 
+    @PostMapping(Endpoints.AuthAPI.DEALER_LOGIN)
+    public LoginDealerResponseDTO loginDealer(@RequestBody @Valid LoginRequestDTO loginRequestDTO)
+    {
+        return dealerService.login(loginRequestDTO);
+    }
+
+//    @PostMapping(Endpoints.AuthAPI.DEALER_LOGIN_OTP)
+//    public LoginDealerResponseDTO loginDealerViaOtp(@RequestBody @Valid LoginViaOtpRequestDTO loginViaOtpRequestDTO)
+//    {
+//        return dealerService.loginViaOtp(loginViaOtpRequestDTO.getUsername(),loginViaOtpRequestDTO.getOtp());
+//    }
 }

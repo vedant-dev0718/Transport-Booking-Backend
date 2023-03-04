@@ -8,6 +8,7 @@ import com.vedant.TransportBookingBackend.dto.request.SignupDealerRequestDTO;
 import com.vedant.TransportBookingBackend.dto.response.LoginDealerResponseDTO;
 import com.vedant.TransportBookingBackend.enums.UserRole;
 import com.vedant.TransportBookingBackend.exception.InvalidCredentialsException;
+import com.vedant.TransportBookingBackend.exception.InvalidOtpException;
 import com.vedant.TransportBookingBackend.exception.UserAlreadyExistsException;
 import com.vedant.TransportBookingBackend.model.CustomUserDetails;
 import com.vedant.TransportBookingBackend.repository.DealerRepository;
@@ -78,7 +79,7 @@ public class DealerService {
     }
 
     public LoginDealerResponseDTO login(LoginRequestDTO loginRequestDTO) {
-
+        log.info(loginRequestDTO.toString());
         try {
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -98,4 +99,20 @@ public class DealerService {
                 .accessToken(accessToken)
                 .build();
     }
+
+
+//    public LoginDealerResponseDTO loginViaOtp(String username, Integer otp) {
+//        if (!otpService.isOtpValid(username, otp)) throw new InvalidOtpException();
+//        otpService.clearOTP(username);
+//
+//        val userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
+//        val accessToken = jwtUtil.generateToken(userDetails);
+//
+//        val dealer = dealerRepository.findByUser_Username(userDetails.getUsername());
+//        return LoginDealerResponseDTO.builder()
+//                .dealer(dealer)
+//                .accessToken(accessToken)
+//                .build();
+//
+//    }
 }
