@@ -1,10 +1,10 @@
 package com.vedant.TransportBookingBackend.controller;
 
 import com.vedant.TransportBookingBackend.constant.Endpoints;
-import com.vedant.TransportBookingBackend.dto.request.LoginRequestDTO;
-import com.vedant.TransportBookingBackend.dto.request.LoginViaOtpRequestDTO;
+import com.vedant.TransportBookingBackend.dto.request.*;
+import com.vedant.TransportBookingBackend.dto.response.BookingResponseDTO;
+import com.vedant.TransportBookingBackend.dto.response.GetDriversResponseDTO;
 import com.vedant.TransportBookingBackend.dto.response.LoginDealerResponseDTO;
-import com.vedant.TransportBookingBackend.dto.request.SignupDealerRequestDTO;
 import com.vedant.TransportBookingBackend.service.DealerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,14 +30,36 @@ public class DealerController {
     }
 
     @PostMapping(Endpoints.AuthAPI.DEALER_LOGIN)
-    public LoginDealerResponseDTO loginDealer(@RequestBody @Valid LoginRequestDTO loginRequestDTO)
-    {
+    public LoginDealerResponseDTO loginDealer(@RequestBody @Valid LoginRequestDTO loginRequestDTO) {
         return dealerService.login(loginRequestDTO);
     }
 
-//    @PostMapping(Endpoints.AuthAPI.DEALER_LOGIN_OTP)
-//    public LoginDealerResponseDTO loginDealerViaOtp(@RequestBody @Valid LoginViaOtpRequestDTO loginViaOtpRequestDTO)
-//    {
-//        return dealerService.loginViaOtp(loginViaOtpRequestDTO.getUsername(),loginViaOtpRequestDTO.getOtp());
-//    }
+    // TODO:: HAVEN'T TESTED
+    @PostMapping(Endpoints.AuthAPI.DEALER_LOGIN_OTP)
+    public LoginDealerResponseDTO loginDealerViaOtp(@RequestBody @Valid LoginViaOtpRequestDTO loginViaOtpRequestDTO) {
+        return dealerService.loginViaOtp(loginViaOtpRequestDTO.getUsername(), loginViaOtpRequestDTO.getOtp());
+    }
+
+    @PostMapping(Endpoints.DealerAPI.GET_DRIVERS)
+    public GetDriversResponseDTO getDriversForDealer(@RequestBody
+                                                     @Valid GetDriversForDealerRequestDTO getDriversForDealerRequestDTO) {
+        return dealerService.getDriversForDealer(getDriversForDealerRequestDTO);
+    }
+
+    @PostMapping(Endpoints.DealerAPI.GET_DRIVERS_BY_STATE)
+    public GetDriversResponseDTO getDriversByState(@RequestBody @Valid GetDriversByStateRequestDTO getDriversByStateRequestDTO) {
+        return dealerService.getDriversByState(getDriversByStateRequestDTO);
+    }
+
+    @PostMapping(Endpoints.DealerAPI.GET_DRIVERS_BY_ROUTE)
+    public GetDriversResponseDTO getDriverByRoute(@RequestBody @Valid GetDriverByRouteRequestDTO getDriverByRouteRequestDTO) {
+        return dealerService.getDriversByRoute(getDriverByRouteRequestDTO);
+    }
+
+    @PostMapping(Endpoints.DealerAPI.BOOK_DRIVER)
+    public BookingResponseDTO bookDriver(@RequestBody @Valid BookingRequestDTO bookingRequestDTO) {
+        return dealerService.bookDriver(bookingRequestDTO);
+    }
+
+
 }

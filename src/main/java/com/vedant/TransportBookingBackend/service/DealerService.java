@@ -1,27 +1,35 @@
 package com.vedant.TransportBookingBackend.service;
 
 
+import com.vedant.TransportBookingBackend.dao.Booking;
 import com.vedant.TransportBookingBackend.dao.Dealer;
 import com.vedant.TransportBookingBackend.dao.User;
-import com.vedant.TransportBookingBackend.dto.request.LoginRequestDTO;
-import com.vedant.TransportBookingBackend.dto.request.SignupDealerRequestDTO;
+import com.vedant.TransportBookingBackend.dto.request.*;
+import com.vedant.TransportBookingBackend.dto.response.BookingResponseDTO;
+import com.vedant.TransportBookingBackend.dto.response.GetDriversResponseDTO;
 import com.vedant.TransportBookingBackend.dto.response.LoginDealerResponseDTO;
 import com.vedant.TransportBookingBackend.enums.UserRole;
 import com.vedant.TransportBookingBackend.exception.InvalidCredentialsException;
 import com.vedant.TransportBookingBackend.exception.InvalidOtpException;
+import com.vedant.TransportBookingBackend.exception.InvalidSortFieldException;
 import com.vedant.TransportBookingBackend.exception.UserAlreadyExistsException;
 import com.vedant.TransportBookingBackend.model.CustomUserDetails;
+import com.vedant.TransportBookingBackend.repository.BookingRepository;
 import com.vedant.TransportBookingBackend.repository.DealerRepository;
 import com.vedant.TransportBookingBackend.repository.DriverRepository;
 import com.vedant.TransportBookingBackend.utils.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
@@ -38,13 +46,13 @@ public class DealerService {
 
     private final DriverRepository driverRepository;
 
-//    private final DriverService driverService;
+    private final DriverService driverService;
 
     private final JwtUtil jwtUtil;
 
-//    private final BookingRepository bookingRepository;
+    private final BookingRepository bookingRepository;
 
-//    private final OtpService otpService;
+    private final OtpService otpService;
 
     private final UserService userService;
 
@@ -100,19 +108,118 @@ public class DealerService {
                 .build();
     }
 
+    public GetDriversResponseDTO getDriversByState(GetDriversByStateRequestDTO getDriversByStateRequestDTO) {
+        val sortOrder = getDriversByStateRequestDTO.getDescending()
+                ? Sort.Direction.DESC : Sort.Direction.ASC;
 
-//    public LoginDealerResponseDTO loginViaOtp(String username, Integer otp) {
-//        if (!otpService.isOtpValid(username, otp)) throw new InvalidOtpException();
-//        otpService.clearOTP(username);
-//
-//        val userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
-//        val accessToken = jwtUtil.generateToken(userDetails);
-//
-//        val dealer = dealerRepository.findByUser_Username(userDetails.getUsername());
-//        return LoginDealerResponseDTO.builder()
-//                .dealer(dealer)
-//                .accessToken(accessToken)
-//                .build();
-//
-//    }
+        val sortBy = getSortField(getDriversByStateRequestDTO.getSortBy());
+        val pageRequest =
+                PageRequest.of(
+                        getDriversByStateRequestDTO.getPageNumber(),
+                        getDriversByStateRequestDTO.getPageSize(),
+                        Sort.by(sortOrder, sortBy)
+                );
+
+        val drivers = driverRepository.getAllDriversByState(getDriversByStateRequestDTO.getState(), pageRequest);
+        return GetDriversResponseDTO.builder()
+                .totalDrivers(drivers.getTotalElements())
+                .totalPages(drivers.getTotalPages())
+                .driverList(drivers.toList())
+                .build();
+    }
+
+    public GetDriversResponseDTO getDriversForDealer(GetDriversForDealerRequestDTO driverRequest) {
+        val sortOrder = driverRequest.getDescending() ? Sort.Direction.DESC
+                : Sort.Direction.ASC;
+
+        val sortBy = getSortField(driverRequest.getSortBy());
+
+        val pageRequest = PageRequest.of(
+                driverRequest.getPageNumber(),
+                driverRequest.getPageSize(),
+                Sort.by(sortOrder, sortBy)
+        );
+
+        val drivers = driverRepository.getAllDriversByCity(driverRequest.getCity(), pageRequest);
+
+        return GetDriversResponseDTO.builder()
+                .totalDrivers(drivers.getTotalElements())
+                .totalPages(drivers.getTotalPages())
+                .driverList(drivers.toList())
+                .build();
+    }
+
+
+    private String getSortField(String sortRequest) {
+        return switch (sortRequest) {
+            case "name" -> "user.name";
+            case "age" -> "age";
+            case "truckCapacity" -> "truckCapacity";
+            case "transporterName" -> "transporterName";
+            case "drivingExperience" -> "drivingExperience";
+            default -> throw new InvalidSortFieldException(String.format("Can not sort on %s!", sortRequest));
+        };
+    }
+
+    public LoginDealerResponseDTO loginViaOtp(String username, Integer otp) {
+        if (!otpService.isOtpValid(username, otp)) throw new InvalidOtpException();
+        otpService.clearOTP(username);
+
+        val userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
+        val accessToken = jwtUtil.generateToken(userDetails);
+
+        val dealer = dealerRepository.findByUser_Username(userDetails.getUsername());
+        return LoginDealerResponseDTO.builder()
+                .dealer(dealer)
+                .accessToken(accessToken)
+                .build();
+
+    }
+
+    public GetDriversResponseDTO getDriversByRoute(GetDriverByRouteRequestDTO getDriverByRouteRequestDTO) {
+        val sortOrder = getDriverByRouteRequestDTO.getDescending() ? Sort.Direction.DESC : Sort.Direction.ASC;
+        val sortBy = getSortField(getDriverByRouteRequestDTO.getSortBy());
+        val pageRequest = PageRequest.of(
+                getDriverByRouteRequestDTO.getPageNumber(),
+                getDriverByRouteRequestDTO.getPageSize(),
+                Sort.by(sortOrder, sortBy)
+        );
+        val drivers = driverRepository.getAllDriversByRoute(getDriverByRouteRequestDTO.getFromCity(), getDriverByRouteRequestDTO.getToCity(), pageRequest);
+        return GetDriversResponseDTO.builder()
+                .totalDrivers(drivers.getTotalElements())
+                .totalPages(drivers.getTotalPages())
+                .driverList(drivers.toList())
+                .build();
+    }
+
+    public BookingResponseDTO bookDriver(BookingRequestDTO bookingRequestDTO) {
+        val dealer = getDealerById(bookingRequestDTO.getDealerId());
+        val driver = driverService.getDriverById(bookingRequestDTO.getDriverId());
+
+        val booking = Booking.builder()
+                .dealers(dealer)
+                .driver(driver)
+                .bookedOn(new Date())
+                .fromCity(bookingRequestDTO.getFromCity())
+                .toCity(bookingRequestDTO.getToCity())
+                .bookingDate(bookingRequestDTO.getBookingDate())
+                .build();
+        bookingRepository.save(booking);
+
+        return BookingResponseDTO.builder()
+                .driverId(driver.getDriverId())
+                .driverName(driver.getUser().getName())
+                .driverContact(driver.getUser().getMobileNumber())
+                .driverTruckNumber(driver.getTruckNumber())
+                .fromCity(booking.getFromCity())
+                .toCity(booking.getToCity())
+                .bookingDate(bookingRequestDTO.getBookingDate())
+                .bookedOn(booking.getBookedOn())
+                .build();
+    }
+
+    public Dealer getDealerById(String id) {
+        return dealerRepository.findById(id)
+                .orElseThrow();
+    }
 }
