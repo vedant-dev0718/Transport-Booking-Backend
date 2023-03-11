@@ -26,4 +26,5 @@ public class OtpController {
         otpService.generateOTP(user);
         return "Sent OTP";
     }
+
 }
